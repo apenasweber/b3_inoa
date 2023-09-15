@@ -1,8 +1,9 @@
-from celery import shared_task
+import logging
 from datetime import datetime
+
+from celery import shared_task
 from trading.models import Asset
 from trading.views import collect_prices
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ def task_collect_prices():
     Outputs: None
     """
     logger.info("Iniciando a busca de preços dos ativos...")
+    print("Iniciando a busca de preços dos ativos...")
     # Get all assets from the database
     assets = Asset.objects.all()
 
@@ -41,3 +43,4 @@ def task_collect_prices():
             collect_prices(asset.ticker)
             asset.check_and_send_alerts()
             logger.info("Busca de preços concluída.")
+            print("Busca de preços concluída.")

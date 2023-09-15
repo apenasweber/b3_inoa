@@ -1,0 +1,48 @@
+version: "3"
+
+services:
+  web:
+    build: .
+    command: ["sh", "start.sh"]
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+  celery:
+    build: .
+    command: /bin/bash -c "export PYTHONPATH='/app/b3_inoa:$PYTHONPATH' && celery -A b3_inoa.celery worker --loglevel=info"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+  celery-beat:
+    build: .
+    command: /bin/bash -c "export PYTHONPATH='/app/b3_inoa:$PYTHONPATH' && celery -A b3_inoa.celery beat --loglevel=info"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:

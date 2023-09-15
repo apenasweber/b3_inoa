@@ -1,4 +1,5 @@
 import pytest
+
 from .models import Asset
 from .views import send_email_alert
 

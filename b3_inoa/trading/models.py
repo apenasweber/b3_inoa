@@ -1,5 +1,10 @@
+import logging
+
 from django.db import models
+from trading.utils.check_price_limits import check_price_limits
 from trading.utils.tickers import TICKER_CHOICES
+
+logger = logging.getLogger(__name__)
 
 
 CHECK_INTERVAL_CHOICES = [
@@ -28,7 +33,7 @@ class Asset(models.Model):
     def __str__(self):
         return self.ticker
 
-    def save(self, *args, **kwargs):
+    def save(self, check_limits=True, *args, **kwargs):
         """
         Overrides the default save method to add custom business logic before saving the asset object.
         It performs validation to ensure that the price is greater than zero.
@@ -39,43 +44,28 @@ class Asset(models.Model):
             raise ValueError("Check interval must be greater than zero.")
         super().save(*args, **kwargs)
 
-        # Import the collect_prices function within the method to avoid circular imports
-        from trading.utils.collect_prices import collect_prices
+        if check_limits:
+            from trading.utils.collect_prices import collect_prices
 
-        collect_prices(self.ticker)
+            collect_prices(self.ticker)
+            check_price_limits(self)
 
-    def check_price_limits(self) -> str:
+    def check_price_limits(self):
         """
         Checks if the asset's current price is outside its price limits and sends an email alert if it is.
-
-        Returns:
-            str: A message indicating the success or failure of the check.
         """
-        from trading.views import send_email_alert
-
-        last_quotation = self.quotations.last()
-        if last_quotation is None:
-            return f"No quotations found for asset {self.ticker}"
-
-        current_price = last_quotation.price
-
-        if current_price <= self.lower_limit:
-            send_email_alert(self, "Buy")
-            return f"Buy alert sent for asset {self.ticker}"
-
-        elif current_price >= self.upper_limit:
-            send_email_alert(self, "Sell")
-            return f"Sell alert sent for asset {self.ticker}"
-
-        return "Price is within limits"
+        result = check_price_limits(self)
+        if "alert sent" in result.lower():
+            logger.info(f"Email alert sent for asset {self.ticker}")
+        else:
+            logger.info(f"No email alert required for asset {self.ticker}")
 
     def check_and_send_alerts(self):
         """
         Checks the price limits and sends email alerts if necessary.
         """
         self.check_price_limits()
-        self.email_sent = True
-        self.save()
+        self.save(check_limits=False)
 
 
 class Quotation(models.Model):
