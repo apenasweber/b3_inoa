@@ -20,7 +20,7 @@ O **B3 Asset Monitor** é um sistema projetado para auxiliar os investidores nas
    ```bash
    cd b3_inoa
    ```
-4. Execute o projeto e os testes com:
+4. Execute o projeto com:
    ```bash
    make run
    ```
