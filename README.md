@@ -26,10 +26,13 @@ O **B3 Asset Monitor** é um sistema projetado para auxiliar os investidores nas
    ```
 5. Acesse [http://localhost:8000/admin](http://localhost:8000/admin)
 6. Logue com user: admin e password: admin
-7. Para rodar testes unitários:
-   ```bash
-   make test
-   ```
+7. Clique em Assets ou Add Assets para inserir o asset desejado para monitoria.
+
+## Testes unitários:
+
+```bash
+make test
+```
 
 ## Base de Dados
 

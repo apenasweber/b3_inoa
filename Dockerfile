@@ -9,7 +9,13 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y netcat
+RUN apt-get update && apt-get install -y \
+    netcat \
+    gcc \
+    libffi-dev \
+    libssl-dev \
+    python3-dev \
+    build-essential
 
 # Install Python dependencies
 COPY requirements.txt /app/

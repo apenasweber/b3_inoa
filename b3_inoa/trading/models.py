@@ -1,7 +1,6 @@
 import logging
 
 from django.db import models
-from trading.utils.check_price_limits import check_price_limits
 from trading.utils.tickers import TICKER_CHOICES
 
 logger = logging.getLogger(__name__)
@@ -45,15 +44,20 @@ class Asset(models.Model):
         super().save(*args, **kwargs)
 
         if check_limits:
-            from trading.utils.collect_prices import collect_prices
+            from trading.utils.collect_prices import PriceCollector
 
-            collect_prices(self.ticker)
+            collector = PriceCollector()
+            collector.collect_prices(self.ticker)
+            from trading.utils.check_price_limits import check_price_limits
+
             check_price_limits(self)
 
-    def check_price_limits(self):
+    def handle_price_alert(self):
         """
         Checks if the asset's current price is outside its price limits and sends an email alert if it is.
         """
+        from trading.utils.check_price_limits import check_price_limits
+
         result = check_price_limits(self)
         if "alert sent" in result.lower():
             logger.info(f"Email alert sent for asset {self.ticker}")
@@ -64,7 +68,9 @@ class Asset(models.Model):
         """
         Checks the price limits and sends email alerts if necessary.
         """
-        self.check_price_limits()
+        from trading.utils.check_price_limits import check_price_limits
+
+        self.handle_price_alert()
         self.save(check_limits=False)
 
 
@@ -98,5 +104,3 @@ class Quotation(models.Model):
         super().save(*args, **kwargs)
 
         return f"Quotation for {self.asset} - Price: {self.price}"
-
-    timestamp = models.DateTimeField(auto_now_add=True)
